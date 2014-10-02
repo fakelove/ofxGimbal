@@ -1,6 +1,8 @@
 ofxGimbal
 =========
 
+Obj-C Code made by Josh Safran
+
 For interaction with Qualcomm Gimbals on iOS.
 
 NOTES ON USAGE:
