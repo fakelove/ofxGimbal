@@ -5,6 +5,12 @@
    
    3. gimbalController.h includes RSSI thresholds
  
+   4. If you get an error that the project is missing some files from the FYX.framework delete reference to 'ofxGimbal' folder in your project navigator in xcode and then use the 'OF addon' Plug in to reinsert the 'ofxGimbal' addon.
+   
+   5. Make sure to also use the 'ofxOsc' addon to be able to send data from your iOS device to another device or computer.
+ 
+ // to include: rssi(), id name, gimbal on / off //
+ 
  */
 
 
@@ -14,6 +20,12 @@
 #include "ofxiOS.h"
 #include "ofxiOSExtras.h"
 #include "GimbalData.h"
+
+#include "ofxOsc.h"
+
+#define HOST "172.16.1.147" // IP you're sending to
+#define PORT 7000 // Port you're sending to
+
 
 
 class ofApp : public ofxiOSApp {
@@ -59,6 +71,10 @@ class ofApp : public ofxiOSApp {
     string departString;
     int RSSI;
     
+    //OSC Sender
+    
+    ofxOscSender sender;
+
     
 
 

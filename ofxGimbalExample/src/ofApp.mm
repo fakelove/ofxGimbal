@@ -6,10 +6,16 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){	
+    
+    //Setup Gimbal
     setupGimbalAdapter();
     
     maxDepartureTime = 30; //30 seconds until something gets deleted from the list
     maxUpdateThresh = 5; //must have left 30 seconds ago, and been updated greater than 5 seconds ago - we need double checks that a person is still there with update because sometimes getdeparted gets flagged very early
+    
+    //Setup OSC sender
+    sender.setup( HOST, PORT );
+
     
 }
 
@@ -24,7 +30,7 @@ void ofApp::update(){
     //on every update - test each id to see if it has been flagged as departed. if it has departed AND it has been gone for longer than X seconds - then it can be deleted from the list - also check if it has been updated recently
     
     
-        for(auto iter = mainGimbalList.begin(); iter != mainGimbalList.end(); ){
+        for ( auto iter = mainGimbalList.begin(); iter != mainGimbalList.end(); ){
     
                 float whenDidTheyLeave = ofGetElapsedTimef()- iter->second.getDepartureTime();
                 float whenDidLastUpdate = ofGetElapsedTimef()-iter->second.getLastUpdated();
@@ -34,14 +40,14 @@ void ofApp::update(){
                 if(iter->second.getHasDeparted()==true && whenDidTheyLeave>maxDepartureTime && whenDidLastUpdate > maxUpdateThresh ){
     
     
-                    cout<< "Removing: " << iter->second.getName()<<endl;
+                    cout << "Removing: " << iter->second.getName()<<endl;
                     mainGimbalList.erase(iter++); //this erases and then increments
                     
-                }else{
+                } else {
                     ++iter;
                 }
             }
-
+   
 
 }
 
@@ -64,13 +70,32 @@ void ofApp::draw(){
         ofDrawBitmapString("Sighting ID: " + x.second.getName(), 20,20);
         ofDrawBitmapString("Arrived: " + ofToString(ofGetElapsedTimef()-x.second.getArrivalTime(),2)+"s ago", 300,20);
         ofDrawBitmapString("RSSI: " + ofToString(x.second.getRSSI()), 20,40);
+
         ofDrawBitmapString("Last update: " + ofToString(ofGetElapsedTimef()-x.second.getLastUpdated(),2)+"s ago", 300,40);
         
-        ofDrawBitmapString("Has Departed: " +ofToString(x.second.getHasDeparted()), 20,60);
+        ofDrawBitmapString("Has Departed: " + ofToString(x.second.getHasDeparted()), 20,60);
         ofDrawBitmapString("Departure Time: " +ofToString(ofGetElapsedTimef()-x.second.getDepartureTime(),2), 160,60);
         
-        ofDrawBitmapString("Time to deletion: " +ofToString(maxDepartureTime-(ofGetElapsedTimef()-x.second.getDepartureTime()),2), 350,60);
+        ofDrawBitmapString("Time to deletion: " + ofToString(maxDepartureTime-(ofGetElapsedTimef()-x.second.getDepartureTime()),2), 350,60);
         
+        /// Send out Gimbal 'ID' and 'RSSI' via OSC //
+        
+        ofxOscMessage sendGimbal;
+
+        //Send out Gimbal and it's name to be parsed in reciever program
+
+        sendGimbal.setAddress( "/Gimbal/" + ofToString(x.second.getName()) );
+
+        //Send out Gimbal RSSI
+
+        sendGimbal.addIntArg(x.second.getRSSI());
+        
+        //Send out Gimbal Detected Boolean to be parsed in reciever program
+
+        sendGimbal.addIntArg(1);
+        sender.sendMessage(sendGimbal);
+        
+       
         
         //color coding signal bar
         if (x.second.getRSSI()>=-55) {
